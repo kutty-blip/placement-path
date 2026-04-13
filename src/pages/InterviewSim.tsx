@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, User, Send, Building2, ArrowLeft } from "lucide-react";
+import { Bot, User, Send, Building2, ArrowLeft, Mic, MicOff, Volume2 } from "lucide-react";
 import { COMPANY_INTERVIEW_QUESTIONS } from "@/context/AppContext";
 import { useApp } from "@/context/AppContext";
+import { toast } from "sonner";
 
 interface Message { role: "bot" | "user"; text: string }
 
@@ -14,8 +15,9 @@ const getFeedback = (answer: string, questionType: "hr" | "technical"): string =
   if (words < 15) return "🔸 Decent start, but try to add more depth. Mention specific examples or technologies.";
 
   if (questionType === "hr") {
-    const keywords = ["project", "experience", "team", "leadership", "challenge", "goal", "learned", "achievement", "growth", "passion"];
+    const keywords = ["project", "experience", "team", "leadership", "challenge", "goal", "learned", "achievement", "growth", "passion", "motivated", "contribute", "communication", "skills"];
     const found = keywords.filter(k => answer.toLowerCase().includes(k));
+    if (found.length >= 3) return `✅ Excellent response! Strong themes: ${found.join(", ")}. Very well articulated!`;
     if (found.length >= 2) return `✅ Strong answer! You mentioned key themes: ${found.join(", ")}. Shows self-awareness.`;
     if (words >= 25) return "👍 Good detail! Try weaving in themes like leadership, teamwork, or personal growth.";
     return "🔸 Add personal anecdotes and reflect on what you learned from experiences.";
@@ -28,6 +30,10 @@ const getFeedback = (answer: string, questionType: "hr" | "technical"): string =
   }
 };
 
+// Check for Web Speech API support
+const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+const speechSynthesis = window.speechSynthesis;
+
 const InterviewSim = () => {
   const { profile } = useApp();
   const shortlisted = profile.shortlistedCompanies || [];
@@ -36,9 +42,30 @@ const InterviewSim = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [questionIdx, setQuestionIdx] = useState(0);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const recognitionRef = useRef<any>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const companyQs = COMPANY_INTERVIEW_QUESTIONS.find(c => c.company === selectedCompany);
   const questions = companyQs ? (interviewType === "hr" ? companyQs.hrQuestions : companyQs.technicalQuestions) : [];
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const speakText = (text: string) => {
+    if (!voiceEnabled || !speechSynthesis) return;
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    speechSynthesis.speak(utterance);
+  };
 
   const startInterview = (company: string, type: "hr" | "technical") => {
     setSelectedCompany(company);
@@ -46,25 +73,91 @@ const InterviewSim = () => {
     setQuestionIdx(0);
     const cq = COMPANY_INTERVIEW_QUESTIONS.find(c => c.company === company);
     const qs = cq ? (type === "hr" ? cq.hrQuestions : cq.technicalQuestions) : [];
+    const welcomeText = `Welcome to the ${company} ${type === "hr" ? "HR" : "Technical"} Interview Simulator! I'll ask you questions commonly asked at ${company}. ${type === "hr" ? "You can use the microphone to answer with your voice — just like a real interview!" : "Answer as you would in a real interview."}`;
+    const firstQ = qs[0] || "No questions available.";
     setMessages([
-      { role: "bot", text: `Welcome to the ${company} ${type === "hr" ? "HR" : "Technical"} Interview Simulator! I'll ask you questions commonly asked at ${company}. Answer as you would in a real interview.` },
-      { role: "bot", text: qs[0] || "No questions available." },
+      { role: "bot", text: welcomeText },
+      { role: "bot", text: firstQ },
     ]);
     setInput("");
+    // Speak the first question after a short delay
+    if (type === "hr") {
+      setTimeout(() => speakText(firstQ), 1000);
+    }
+  };
+
+  const startListening = () => {
+    if (!SpeechRecognition) {
+      toast.error("Voice input is not supported in your browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    let finalTranscript = "";
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + " ";
+        } else {
+          interim = transcript;
+        }
+      }
+      setInput(finalTranscript + interim);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+      if (event.error === "not-allowed") {
+        toast.error("Microphone access denied. Please allow microphone permissions.");
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+    toast.info("🎤 Listening... Speak your answer");
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
   };
 
   const handleSend = () => {
     if (!input.trim()) return;
+    if (isListening) stopListening();
+
     const userMsg: Message = { role: "user", text: input };
     const feedback = getFeedback(input, interviewType);
     const feedbackMsg: Message = { role: "bot", text: feedback };
     const nextIdx = questionIdx + 1;
     const newMessages = [userMsg, feedbackMsg];
+
     if (nextIdx < questions.length) {
       newMessages.push({ role: "bot", text: questions[nextIdx] });
       setQuestionIdx(nextIdx);
+      // Speak the next question for HR interviews
+      if (interviewType === "hr") {
+        setTimeout(() => speakText(questions[nextIdx]), 500);
+      }
     } else {
-      newMessages.push({ role: "bot", text: `🎉 Great job! You've completed the ${selectedCompany} ${interviewType === "hr" ? "HR" : "Technical"} mock interview. Review the feedback above to prepare better!` });
+      const completionMsg = `🎉 Great job! You've completed the ${selectedCompany} ${interviewType === "hr" ? "HR" : "Technical"} mock interview. Review the feedback above to prepare better!`;
+      newMessages.push({ role: "bot", text: completionMsg });
     }
     setMessages(prev => [...prev, ...newMessages]);
     setInput("");
@@ -76,7 +169,7 @@ const InterviewSim = () => {
       <DashboardLayout>
         <div className="p-8 max-w-4xl">
           <h1 className="text-2xl font-bold font-heading text-foreground mb-1">Interview Simulator</h1>
-          <p className="text-muted-foreground mb-6">Choose a company and interview type to practice.</p>
+          <p className="text-muted-foreground mb-6">Choose a company and interview type to practice. HR rounds support <strong>voice input</strong> 🎤</p>
 
           {shortlisted.length > 0 && (
             <div className="mb-6">
@@ -89,7 +182,9 @@ const InterviewSim = () => {
                       <span className="font-heading font-semibold text-foreground">{name}</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => startInterview(name, "hr")} className="flex-1 text-xs">HR Round</Button>
+                      <Button size="sm" variant="outline" onClick={() => startInterview(name, "hr")} className="flex-1 text-xs">
+                        <Mic className="w-3 h-3 mr-1" /> HR Round
+                      </Button>
                       <Button size="sm" className="flex-1 text-xs gradient-primary text-primary-foreground" onClick={() => startInterview(name, "technical")}>Technical</Button>
                     </div>
                   </div>
@@ -108,7 +203,9 @@ const InterviewSim = () => {
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">{cq.hrQuestions.length} HR + {cq.technicalQuestions.length} Technical questions</p>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => startInterview(cq.company, "hr")} className="flex-1 text-xs">HR Round</Button>
+                  <Button size="sm" variant="outline" onClick={() => startInterview(cq.company, "hr")} className="flex-1 text-xs">
+                    <Mic className="w-3 h-3 mr-1" /> HR Round
+                  </Button>
                   <Button size="sm" className="flex-1 text-xs gradient-primary text-primary-foreground" onClick={() => startInterview(cq.company, "technical")}>Technical</Button>
                 </div>
               </div>
@@ -123,12 +220,25 @@ const InterviewSim = () => {
   return (
     <DashboardLayout>
       <div className="p-8 max-w-3xl flex flex-col h-[calc(100vh-2rem)]">
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => setSelectedCompany(null)} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></button>
-          <div>
-            <h1 className="text-xl font-bold font-heading text-foreground">{selectedCompany} — {interviewType === "hr" ? "HR" : "Technical"} Interview</h1>
-            <p className="text-muted-foreground text-sm">Question {Math.min(questionIdx + 1, questions.length)} of {questions.length}</p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => { setSelectedCompany(null); stopListening(); speechSynthesis?.cancel(); }} className="text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold font-heading text-foreground">{selectedCompany} — {interviewType === "hr" ? "HR" : "Technical"} Interview</h1>
+              <p className="text-muted-foreground text-sm">
+                Question {Math.min(questionIdx + 1, questions.length)} of {questions.length}
+                {interviewType === "hr" && " · 🎤 Voice enabled"}
+              </p>
+            </div>
           </div>
+          {interviewType === "hr" && (
+            <Button variant="outline" size="sm" onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) speechSynthesis?.cancel(); }}
+              className={voiceEnabled ? "text-primary border-primary/30" : "text-muted-foreground"}>
+              <Volume2 className="w-4 h-4 mr-1" /> {voiceEnabled ? "Voice On" : "Voice Off"}
+            </Button>
+          )}
         </div>
 
         <div className="flex-1 bg-card rounded-xl border border-border shadow-card p-5 overflow-y-auto space-y-3 mb-4">
@@ -141,13 +251,37 @@ const InterviewSim = () => {
               {msg.role === "user" && <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5"><User className="w-4 h-4 text-muted-foreground" /></div>}
             </div>
           ))}
+          <div ref={chatEndRef} />
         </div>
 
         {questionIdx < questions.length && (
-          <div className="flex gap-2">
-            <Textarea value={input} onChange={e => setInput(e.target.value)} placeholder="Type your answer..."
-              rows={2} className="flex-1" onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
-            <Button onClick={handleSend} className="gradient-primary text-primary-foreground self-end"><Send className="w-4 h-4" /></Button>
+          <div className="space-y-2">
+            {/* Voice indicator */}
+            {isListening && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-destructive/10 rounded-lg text-sm text-destructive animate-pulse">
+                <Mic className="w-4 h-4" />
+                <span>Recording... Speak your answer clearly</span>
+              </div>
+            )}
+            {isSpeaking && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg text-sm text-primary">
+                <Volume2 className="w-4 h-4 animate-pulse" />
+                <span>Interviewer is speaking...</span>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Textarea value={input} onChange={e => setInput(e.target.value)} placeholder={interviewType === "hr" ? "Type or use voice to answer..." : "Type your answer..."}
+                rows={2} className="flex-1" onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
+              <div className="flex flex-col gap-1.5 self-end">
+                {interviewType === "hr" && (
+                  <Button onClick={isListening ? stopListening : startListening} variant="outline" size="icon"
+                    className={isListening ? "border-destructive text-destructive animate-pulse" : "border-primary/30 text-primary"}>
+                    {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  </Button>
+                )}
+                <Button onClick={handleSend} className="gradient-primary text-primary-foreground" size="icon"><Send className="w-4 h-4" /></Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
