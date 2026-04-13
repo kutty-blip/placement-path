@@ -98,7 +98,7 @@ const Companies = () => {
                 ))}
               </div>
               <div className="flex gap-2 pt-2 border-t border-border">
-                <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => navigate("/mock-test")}>Mock Test</Button>
+                <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => navigate(`/mock-test?company=${encodeURIComponent(c.name)}`)}>Mock Test</Button>
                 <Button size="sm" className="flex-1 text-xs gradient-primary text-primary-foreground" onClick={() => navigate("/interview")}>Interview Prep</Button>
               </div>
             </div>
