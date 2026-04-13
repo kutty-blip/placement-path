@@ -22,10 +22,10 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10">
+          <Button variant="ghost" size="sm" className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate("/login")}>
             Log in
           </Button>
-          <Button variant="hero" size="sm" onClick={() => navigate("/dashboard")}>
+          <Button variant="hero" size="sm" onClick={() => navigate("/login")}>
             Get Started
           </Button>
         </div>
