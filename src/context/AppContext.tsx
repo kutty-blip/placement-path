@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { generateMockQuestions, generateMockCodingProblems, CodingProblem } from "./mockDataEngine";
+
+export type { CodingProblem };
 
 export interface UserProfile {
   name: string;
@@ -52,129 +55,11 @@ export interface CompanyInterviewQs {
   technicalQuestions: string[];
 }
 
-// Company-specific previous year question banks
-export const COMPANY_QUESTION_BANKS: CompanyQuestions[] = [
-  {
-    company: "TCS",
-    questions: [
-      { question: "What is the output of 2 + '2' in JavaScript?", options: ["4", "22", "NaN", "Error"], answer: "22", topic: "Programming" },
-      { question: "Which protocol is used for secure web browsing?", options: ["HTTP", "FTP", "HTTPS", "SMTP"], answer: "HTTPS", topic: "Networking" },
-      { question: "What does SQL stand for?", options: ["Structured Query Language", "Simple Query Language", "Standard Query Language", "Sequential Query Language"], answer: "Structured Query Language", topic: "SQL" },
-      { question: "What is the time complexity of linear search?", options: ["O(1)", "O(n)", "O(log n)", "O(n²)"], answer: "O(n)", topic: "DSA" },
-      { question: "Which of these is not an OOPS concept?", options: ["Inheritance", "Encapsulation", "Compilation", "Polymorphism"], answer: "Compilation", topic: "OOP" },
-      { question: "A train 150m long passes a pole in 15 seconds. Its speed is?", options: ["10 m/s", "15 m/s", "20 m/s", "25 m/s"], answer: "10 m/s", topic: "Aptitude" },
-      { question: "If a = 5, b = 3, what is a % b?", options: ["1", "2", "3", "5"], answer: "2", topic: "Programming" },
-      { question: "Which keyword is used to create an object in Java?", options: ["class", "new", "create", "object"], answer: "new", topic: "Java" },
-    ],
-  },
-  {
-    company: "Infosys",
-    questions: [
-      { question: "What is the default value of a boolean in Java?", options: ["true", "false", "null", "0"], answer: "false", topic: "Java" },
-      { question: "Which data structure uses LIFO?", options: ["Queue", "Stack", "Array", "LinkedList"], answer: "Stack", topic: "DSA" },
-      { question: "What does OOP stand for?", options: ["Object Oriented Programming", "Open Online Platform", "Operator Overloading Process", "None"], answer: "Object Oriented Programming", topic: "OOP" },
-      { question: "Which SQL keyword removes duplicate rows?", options: ["UNIQUE", "DISTINCT", "REMOVE", "FILTER"], answer: "DISTINCT", topic: "SQL" },
-      { question: "What is polymorphism?", options: ["One form", "Many forms", "No form", "Two forms"], answer: "Many forms", topic: "OOP" },
-      { question: "If 30% of a number is 45, what is the number?", options: ["135", "150", "120", "100"], answer: "150", topic: "Aptitude" },
-      { question: "Which loop guarantees at least one execution?", options: ["for", "while", "do-while", "foreach"], answer: "do-while", topic: "Programming" },
-      { question: "What is a foreign key?", options: ["Primary key of same table", "Key from another table", "Unique key", "Auto key"], answer: "Key from another table", topic: "SQL" },
-    ],
-  },
-  {
-    company: "Wipro",
-    questions: [
-      { question: "What is the result of 15 / 4 in integer division?", options: ["3", "3.75", "4", "3.5"], answer: "3", topic: "Programming" },
-      { question: "Which sorting has O(n²) worst case?", options: ["Merge Sort", "Quick Sort", "Bubble Sort", "Heap Sort"], answer: "Bubble Sort", topic: "DSA" },
-      { question: "RAM stands for?", options: ["Read Access Memory", "Random Access Memory", "Run Access Memory", "Real Access Memory"], answer: "Random Access Memory", topic: "Computer Basics" },
-      { question: "A boat goes 20 km upstream and 40 km downstream in 8 hours each. Speed of current?", options: ["5 km/h", "2.5 km/h", "3 km/h", "1.25 km/h"], answer: "1.25 km/h", topic: "Aptitude" },
-      { question: "Which HTML tag is used for the largest heading?", options: ["<h6>", "<h1>", "<head>", "<big>"], answer: "<h1>", topic: "Web" },
-      { question: "What does DNS stand for?", options: ["Domain Name System", "Data Network Service", "Digital Name Server", "Domain Network System"], answer: "Domain Name System", topic: "Networking" },
-    ],
-  },
-  {
-    company: "HCL",
-    questions: [
-      { question: "Which language is used for Android development?", options: ["Swift", "Kotlin", "C#", "Ruby"], answer: "Kotlin", topic: "Programming" },
-      { question: "What is the full form of API?", options: ["Application Programming Interface", "Applied Programming Integration", "Application Process Interface", "None"], answer: "Application Programming Interface", topic: "Programming" },
-      { question: "What is 25% of 200?", options: ["25", "50", "75", "100"], answer: "50", topic: "Aptitude" },
-      { question: "Which CSS property changes text color?", options: ["font-color", "text-color", "color", "foreground"], answer: "color", topic: "Web" },
-      { question: "What is a constructor?", options: ["A destructor", "A method called on object creation", "A variable", "A loop"], answer: "A method called on object creation", topic: "OOP" },
-      { question: "Which command shows files in Linux?", options: ["dir", "ls", "show", "list"], answer: "ls", topic: "OS" },
-    ],
-  },
-  {
-    company: "Cognizant",
-    questions: [
-      { question: "What is normalization in databases?", options: ["Making data faster", "Reducing redundancy", "Adding indexes", "Encrypting data"], answer: "Reducing redundancy", topic: "SQL" },
-      { question: "Which join returns all rows from both tables?", options: ["INNER JOIN", "LEFT JOIN", "FULL OUTER JOIN", "CROSS JOIN"], answer: "FULL OUTER JOIN", topic: "SQL" },
-      { question: "What is encapsulation?", options: ["Hiding data", "Inheriting data", "Overloading data", "Destroying data"], answer: "Hiding data", topic: "OOP" },
-      { question: "What is a deadlock?", options: ["Fast execution", "Circular wait", "Memory leak", "Buffer overflow"], answer: "Circular wait", topic: "OS" },
-      { question: "What is the use of 'this' keyword in Java?", options: ["Refers to parent class", "Refers to current object", "Creates new object", "Destroys object"], answer: "Refers to current object", topic: "Java" },
-      { question: "If a pipe can fill a tank in 6 hours, how much fills in 2 hours?", options: ["1/6", "1/3", "1/2", "2/3"], answer: "1/3", topic: "Aptitude" },
-    ],
-  },
-  {
-    company: "Accenture",
-    questions: [
-      { question: "What is cloud computing?", options: ["Local storage", "On-demand computing over internet", "Hardware setup", "Offline computing"], answer: "On-demand computing over internet", topic: "Cloud" },
-      { question: "What does SDLC stand for?", options: ["Software Development Life Cycle", "System Data Logic Control", "Software Design Logic Chart", "None"], answer: "Software Development Life Cycle", topic: "SE" },
-      { question: "Which is a NoSQL database?", options: ["MySQL", "PostgreSQL", "MongoDB", "Oracle"], answer: "MongoDB", topic: "Database" },
-      { question: "Two numbers are in ratio 3:5. If their sum is 64, find the smaller number.", options: ["24", "30", "32", "40"], answer: "24", topic: "Aptitude" },
-      { question: "What is Agile methodology?", options: ["Waterfall model", "Iterative development", "Big bang approach", "V-model"], answer: "Iterative development", topic: "SE" },
-      { question: "What is the purpose of a firewall?", options: ["Speed up internet", "Block unauthorized access", "Store data", "Compress files"], answer: "Block unauthorized access", topic: "Networking" },
-    ],
-  },
-  {
-    company: "Capgemini",
-    questions: [
-      { question: "What is inheritance in OOP?", options: ["Creating new classes from existing", "Hiding data", "Method overloading", "Object destruction"], answer: "Creating new classes from existing", topic: "OOP" },
-      { question: "What is a primary key?", options: ["Any column", "Unique identifier for a row", "Foreign reference", "Index column"], answer: "Unique identifier for a row", topic: "SQL" },
-      { question: "Which protocol sends email?", options: ["HTTP", "FTP", "SMTP", "POP3"], answer: "SMTP", topic: "Networking" },
-      { question: "What is the output of print(type([])) in Python?", options: ["<class 'tuple'>", "<class 'list'>", "<class 'dict'>", "<class 'set'>"], answer: "<class 'list'>", topic: "Python" },
-      { question: "What is abstraction?", options: ["Showing all details", "Hiding complexity", "Data duplication", "Method chaining"], answer: "Hiding complexity", topic: "OOP" },
-      { question: "A man walks 5 km North, 3 km East. Distance from start?", options: ["8 km", "√34 km", "2 km", "4 km"], answer: "√34 km", topic: "Aptitude" },
-    ],
-  },
-  {
-    company: "Zoho",
-    questions: [
-      { question: "What is time complexity of binary search?", options: ["O(n)", "O(log n)", "O(n²)", "O(1)"], answer: "O(log n)", topic: "DSA" },
-      { question: "Which data structure uses FIFO?", options: ["Stack", "Queue", "Tree", "Graph"], answer: "Queue", topic: "DSA" },
-      { question: "What is the space complexity of merge sort?", options: ["O(1)", "O(n)", "O(log n)", "O(n²)"], answer: "O(n)", topic: "DSA" },
-      { question: "Which traversal gives sorted output for BST?", options: ["Preorder", "Postorder", "Inorder", "Level order"], answer: "Inorder", topic: "DSA" },
-      { question: "What is a hash collision?", options: ["Two keys map to same index", "Key not found", "Table overflow", "Empty bucket"], answer: "Two keys map to same index", topic: "DSA" },
-      { question: "Which graph algorithm finds shortest path?", options: ["DFS", "BFS", "Dijkstra", "Prim's"], answer: "Dijkstra", topic: "DSA" },
-      { question: "What is dynamic programming?", options: ["Random solving", "Breaking into overlapping subproblems", "Brute force", "Greedy approach"], answer: "Breaking into overlapping subproblems", topic: "DSA" },
-      { question: "What is the worst case of quicksort?", options: ["O(n log n)", "O(n²)", "O(n)", "O(log n)"], answer: "O(n²)", topic: "DSA" },
-    ],
-  },
-  {
-    company: "Amazon",
-    questions: [
-      { question: "Which sorting algorithm has best average case?", options: ["Bubble Sort", "Merge Sort", "Selection Sort", "Insertion Sort"], answer: "Merge Sort", topic: "DSA" },
-      { question: "What is the time complexity of accessing a HashMap?", options: ["O(n)", "O(log n)", "O(1)", "O(n²)"], answer: "O(1)", topic: "DSA" },
-      { question: "What is a balanced BST?", options: ["All leaves at same level", "Height difference ≤ 1", "Complete binary tree", "Full binary tree"], answer: "Height difference ≤ 1", topic: "DSA" },
-      { question: "Which design pattern is Singleton?", options: ["Creational", "Structural", "Behavioral", "Functional"], answer: "Creational", topic: "System Design" },
-      { question: "What is CAP theorem?", options: ["Consistency, Availability, Partition tolerance", "Cache, API, Protocol", "Compute, Access, Performance", "None"], answer: "Consistency, Availability, Partition tolerance", topic: "System Design" },
-      { question: "What is the purpose of a load balancer?", options: ["Store data", "Distribute traffic", "Encrypt data", "Compress files"], answer: "Distribute traffic", topic: "System Design" },
-      { question: "What is an LRU cache?", options: ["Least Recently Updated", "Least Recently Used", "Last Random Update", "Least Required Usage"], answer: "Least Recently Used", topic: "DSA" },
-      { question: "What is amortized time complexity?", options: ["Worst case always", "Average over sequence of operations", "Best case", "Random case"], answer: "Average over sequence of operations", topic: "DSA" },
-    ],
-  },
-  {
-    company: "Flipkart",
-    questions: [
-      { question: "What is a trie data structure used for?", options: ["Sorting", "String prefix matching", "Graph traversal", "Hashing"], answer: "String prefix matching", topic: "DSA" },
-      { question: "What is the time complexity of BFS?", options: ["O(V)", "O(E)", "O(V+E)", "O(V*E)"], answer: "O(V+E)", topic: "DSA" },
-      { question: "What is sharding in databases?", options: ["Replication", "Horizontal partitioning", "Indexing", "Caching"], answer: "Horizontal partitioning", topic: "System Design" },
-      { question: "What is a microservice?", options: ["Monolithic app", "Small independent service", "Database", "Frontend framework"], answer: "Small independent service", topic: "System Design" },
-      { question: "What is memoization?", options: ["Memory allocation", "Caching function results", "Garbage collection", "Stack overflow"], answer: "Caching function results", topic: "DSA" },
-      { question: "Which data structure is used in BFS?", options: ["Stack", "Queue", "Heap", "Tree"], answer: "Queue", topic: "DSA" },
-      { question: "What is eventual consistency?", options: ["Immediate sync", "Data syncs over time", "No consistency", "Random sync"], answer: "Data syncs over time", topic: "System Design" },
-      { question: "What is the difference between process and thread?", options: ["Same thing", "Process has own memory, thread shares", "Thread has own memory", "No difference"], answer: "Process has own memory, thread shares", topic: "OS" },
-    ],
-  },
-];
+// Generated dynamically: 10 coding problems per topic per company
+export const CODING_PROBLEMS: CodingProblem[] = generateMockCodingProblems();
+
+// Generated dynamically: 10 MCQ questions per topic per company
+export const COMPANY_QUESTION_BANKS: CompanyQuestions[] = generateMockQuestions();
 
 // Company-specific interview questions
 export const COMPANY_INTERVIEW_QUESTIONS: CompanyInterviewQs[] = [
