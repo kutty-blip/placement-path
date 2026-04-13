@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -23,7 +22,6 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle />
           <Button variant="ghost" size="sm" className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate("/login")}>
             Log in
           </Button>
