@@ -8,6 +8,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, getAIRecommendations, getMatchedCompanies, getProgressStats, testResults } = useApp();
+  const shortlisted = profile.shortlistedCompanies || [];
   const recs = getAIRecommendations();
   const matched = getMatchedCompanies();
   const stats = getProgressStats();
@@ -35,7 +36,7 @@ const Dashboard = () => {
             { label: "Tests Taken", value: stats.totalTests.toString(), icon: BookOpen, change: `${stats.totalTests > 0 ? "Keep going!" : "Take your first test"}` },
             { label: "Avg Score", value: stats.avg ? `${stats.avg}%` : "—", icon: TrendingUp, change: stats.avg >= 70 ? "Great progress!" : "Room to improve" },
             { label: "Day Streak", value: stats.streak.toString(), icon: Target, change: "Stay consistent!" },
-            { label: "Companies Matched", value: matched.length.toString(), icon: Building2, change: `of ${5} total` },
+            { label: "Shortlisted", value: shortlisted.length.toString(), icon: Building2, change: `${matched.length} matched` },
           ].map((stat, i) => (
             <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
               className="bg-card rounded-xl p-5 shadow-card border border-border">
