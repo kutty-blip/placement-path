@@ -38,10 +38,15 @@ export interface Company {
 
 const SEED_COMPANIES: Company[] = [
   { name: "TCS", process: "Aptitude + Technical + HR", difficulty: "Easy", skillsRequired: ["aptitude", "basic programming"] },
-  { name: "Infosys", process: "Aptitude + Coding + HR", difficulty: "Medium", skillsRequired: ["DSA", "OOP"] },
-  { name: "Zoho", process: "Coding + Advanced Technical", difficulty: "Hard", skillsRequired: ["DSA", "problem solving"] },
-  { name: "Wipro", process: "Aptitude + Technical + HR", difficulty: "Easy", skillsRequired: ["aptitude", "basic programming", "SQL"] },
-  { name: "Cognizant", process: "Aptitude + Coding + HR", difficulty: "Medium", skillsRequired: ["Java", "OOP", "SQL"] },
+  { name: "Infosys", process: "Aptitude + Coding + HR", difficulty: "Easy", skillsRequired: ["aptitude", "OOP"] },
+  { name: "Wipro", process: "Aptitude + Technical + HR", difficulty: "Easy", skillsRequired: ["aptitude"] },
+  { name: "HCL", process: "Aptitude + Technical + HR", difficulty: "Easy", skillsRequired: ["basic programming"] },
+  { name: "Cognizant", process: "Aptitude + Coding + HR", difficulty: "Medium", skillsRequired: ["OOP", "SQL"] },
+  { name: "Accenture", process: "Aptitude + Communication + HR", difficulty: "Medium", skillsRequired: ["aptitude", "communication"] },
+  { name: "Capgemini", process: "Aptitude + Technical + HR", difficulty: "Medium", skillsRequired: ["OOP", "logic"] },
+  { name: "Zoho", process: "Coding + Advanced Technical", difficulty: "Hard", skillsRequired: ["DSA"] },
+  { name: "Amazon", process: "Coding + System Design + Bar Raiser", difficulty: "Hard", skillsRequired: ["DSA"] },
+  { name: "Flipkart", process: "Coding + System Design + HR", difficulty: "Hard", skillsRequired: ["DSA"] },
 ];
 
 interface AppState {
@@ -124,11 +129,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const getAIRecommendations = (): string[] => {
     const recs: string[] = [];
-    if (profile.cgpa > 0 && profile.cgpa < 7) recs.push("Focus on aptitude and basic programming daily.");
-    if (profile.skills.some(s => s.toLowerCase().includes("java"))) recs.push("Practice arrays and strings for 5 days.");
-    if (profile.skills.some(s => s.toLowerCase().includes("dsa"))) recs.push("Solve 2 medium-level DSA problems daily.");
-    if (profile.skills.some(s => s.toLowerCase().includes("python"))) recs.push("Build a mini-project in Python to strengthen fundamentals.");
-    if (profile.skills.some(s => s.toLowerCase().includes("sql"))) recs.push("Practice complex SQL joins and subqueries.");
+    if (profile.skills.length === 0) {
+      recs.push("Start with basic programming and aptitude practice.");
+    } else {
+      if (profile.cgpa > 0 && profile.cgpa < 7) recs.push("Practice aptitude daily + basic coding to strengthen fundamentals.");
+      if (profile.skills.some(s => s.toLowerCase().includes("java"))) recs.push("Practice arrays and strings for 5 days.");
+      if (profile.skills.some(s => s.toLowerCase().includes("dsa"))) recs.push("Solve 2 medium-level DSA problems daily.");
+      if (profile.skills.some(s => s.toLowerCase().includes("python"))) recs.push("Build a mini-project in Python to strengthen fundamentals.");
+      if (profile.skills.some(s => s.toLowerCase().includes("sql"))) recs.push("Practice complex SQL joins and subqueries.");
+      if (profile.skills.some(s => s.toLowerCase().includes("oop"))) recs.push("Review OOP concepts: inheritance, polymorphism, encapsulation.");
+    }
     if (testResults.length > 0) {
       const avg = testResults.reduce((s, t) => s + (t.score / t.total) * 100, 0) / testResults.length;
       if (avg < 50) recs.push("Your test scores are low. Revise fundamentals before attempting more tests.");
