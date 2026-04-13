@@ -8,6 +8,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, getAIRecommendations, getMatchedCompanies, getProgressStats, testResults } = useApp();
+  const shortlisted = profile.shortlistedCompanies || [];
   const recs = getAIRecommendations();
   const matched = getMatchedCompanies();
   const stats = getProgressStats();
