@@ -39,10 +39,12 @@ const Dashboard = () => {
             { label: "Shortlisted", value: shortlisted.length.toString(), icon: Building2, change: `${matched.length} matched` },
           ].map((stat, i) => (
             <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-              className="bg-card rounded-xl p-5 shadow-card border border-border">
+              className="group bg-card rounded-xl p-5 shadow-card border border-border hover:-translate-y-1 hover:shadow-elevated transition-all duration-300 cursor-pointer">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-muted-foreground">{stat.label}</span>
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><stat.icon className="w-5 h-5 text-primary" /></div>
+                <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary flex items-center justify-center transition-colors duration-300">
+                  <stat.icon className="w-5 h-5 text-primary group-hover:text-primary-foreground group-hover:scale-110 transition-all duration-300" />
+                </div>
               </div>
               <div className="text-2xl font-bold font-heading text-foreground">{stat.value}</div>
               <div className="text-xs text-accent mt-1">{stat.change}</div>

@@ -13,6 +13,7 @@ import Companies from "./pages/Companies.tsx";
 import Experiences from "./pages/Experiences.tsx";
 import MockTest from "./pages/MockTest.tsx";
 import InterviewSim from "./pages/InterviewSim.tsx";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 const queryClient = new QueryClient();
 
@@ -23,25 +24,27 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AppProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
-            <Route path="/experiences" element={<ProtectedRoute><Experiences /></ProtectedRoute>} />
-            <Route path="/mock-test" element={<ProtectedRoute><MockTest /></ProtectedRoute>} />
-            <Route path="/interview" element={<ProtectedRoute><InterviewSim /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AppProvider>
+    <ThemeProvider defaultTheme="system" enableSystem attribute="class" themes={["light", "dark", "theme-ocean", "theme-rose", "theme-emerald"]}>
+      <AppProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+              <Route path="/experiences" element={<ProtectedRoute><Experiences /></ProtectedRoute>} />
+              <Route path="/mock-test" element={<ProtectedRoute><MockTest /></ProtectedRoute>} />
+              <Route path="/interview" element={<ProtectedRoute><InterviewSim /></ProtectedRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AppProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
