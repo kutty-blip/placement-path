@@ -115,25 +115,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Matched Companies */}
-        <div className="mt-6 bg-card rounded-xl p-6 shadow-card border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-semibold text-foreground flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-primary" /> Recommended Companies
-            </h2>
-            <Button variant="ghost" size="sm" className="text-primary" onClick={() => navigate("/companies")}>
-              View All <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {matched.slice(0, 3).map(c => (
-              <div key={c.name} className="p-4 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors" onClick={() => navigate("/companies")}>
-                <div className="font-medium text-foreground text-sm">{c.name}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{c.difficulty} · {c.skillsRequired.join(", ")}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+
       </div>
     </DashboardLayout>
   );
