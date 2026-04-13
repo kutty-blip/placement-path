@@ -59,21 +59,6 @@ const HeroSection = () => {
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 1 }}
-          className="mt-16 flex justify-center gap-12 text-primary-foreground/50 text-sm"
-        >
-          {["10K+ Students", "500+ Companies", "95% Success Rate"].map((stat) => (
-            <div key={stat} className="text-center">
-              <div className="text-2xl font-bold text-primary-foreground font-heading">
-                {stat.split(" ")[0]}
-              </div>
-              <div>{stat.split(" ").slice(1).join(" ")}</div>
-            </div>
-          ))}
-        </motion.div>
       </div>
     </section>
   );
