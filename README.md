@@ -50,4 +50,3 @@ It provides:
 
 ---
 
-## 📂 Project Structure
